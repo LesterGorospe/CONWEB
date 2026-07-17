@@ -324,21 +324,27 @@
 
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
-        const scanName = urlParams.get('name');
-        const scanPos = urlParams.get('pos');
-        const scanPhoto = urlParams.get('photo');
+        const scanId = urlParams.get('id');
 
-        if (scanName && scanPos) {
-            document.getElementById("dashboardView").style.style.display = "none";
-            document.getElementById("dashboardView").remove(); // Siguradong burado ang computer dashboard sa selpon
+        if (scanId) {
+            // Tanggalin ang dashboard sa phone view para hindi ma-click
+            document.getElementById("dashboardView").remove(); 
             document.getElementById("portalView").style.display = "block";
             
-            document.getElementById("portalName").innerText = decodeURIComponent(scanName);
-            document.getElementById("portalPosition").innerText = decodeURIComponent(scanPos);
-            
-            if (scanPhoto) {
-                // Pinapalitan ang default avatar ng totoong pinadalang litrato
-                document.getElementById("portalImage").src = decodeURIComponent(scanPhoto);
+            // Hanapin ang empleyado sa database gamit ang ID
+            var emp = employeeDatabase.find(e => e.id === scanId);
+            if (emp) {
+                document.getElementById("portalName").innerText = emp.name;
+                document.getElementById("portalPosition").innerText = emp.position;
+                document.getElementById("portalImage").src = emp.photo || "https://www.w3schools.com/howto/img_avatar.png";
+            } else {
+                // Fallback kapag walang makitang profile o ibang browser ang ginamit
+                const fallbackName = urlParams.get('name');
+                const fallbackPos = urlParams.get('pos');
+                if (fallbackName && fallbackPos) {
+                    document.getElementById("portalName").innerText = decodeURIComponent(fallbackName);
+                    document.getElementById("portalPosition").innerText = decodeURIComponent(fallbackPos);
+                }
             }
         } else {
             renderDirectory();
@@ -353,8 +359,8 @@
                 var img = new Image();
                 img.onload = function() {
                     var canvas = document.createElement("canvas");
-                    // Tamang sukat para magaan sa QR pero malinaw sa bilog
-                    var max_size = 70; 
+                    // Tamang sukat para sa database storage
+                    var max_size = 120; 
                     var width = img.width;
                     var height = img.height;
 
@@ -373,7 +379,7 @@
                     canvas.height = height;
                     var ctx = canvas.getContext("2d");
                     ctx.drawImage(img, 0, 0, width, height);
-                    uploadedImageSrc = canvas.toDataURL("image/jpeg", 0.4); 
+                    uploadedImageSrc = canvas.toDataURL("image/jpeg", 0.6); 
                 }
                 img.src = e.target.result;
             }
@@ -453,17 +459,19 @@
         qrDiv.innerHTML = "";
 
         var currentUrl = window.location.href.split('?')[0];
-        var scanUrl = currentUrl + "?name=" + encodeURIComponent(emp.name) + 
-                      "&pos=" + encodeURIComponent(emp.position) + 
-                      "&photo=" + encodeURIComponent(emp.photo);
+        // Idadala lang natin ang ID, Name, at Pos nang WALANG dambuhalang image string.
+        // Dahil dito, magiging sobrang simple at madaling-madali nang i-scan ang QR code!
+        var scanUrl = currentUrl + "?id=" + emp.id + 
+                      "&name=" + encodeURIComponent(emp.name) + 
+                      "&pos=" + encodeURIComponent(emp.position);
 
         new QRCode(qrDiv, {
             text: scanUrl,
-            width: 230, // Pinalaki pa natin para siguradong malinaw at kasya ang picture data
-            height: 230,
+            width: 180, 
+            height: 180,
             colorDark : "#1a365d",
             colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.L
+            correctLevel : QRCode.CorrectLevel.M
         });
 
         document.getElementById("adminCardModal").style.display = "flex";
