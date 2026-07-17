@@ -197,7 +197,7 @@
             border: 1px solid #ddd;
         }
 
-        /* --- 2. SMARTPHONE SCREEN VIEW (WALANG DASHBOARD BUTTON) --- */
+        /* --- 2. SMARTPHONE SCREEN VIEW --- */
         .portal-wrapper {
             display: none; 
             width: 100%;
@@ -282,10 +282,8 @@
             <h2>Register Employee</h2>
             <input type="text" id="empName" placeholder="Employee Name" required>
             <input type="text" id="empPosition" placeholder="Position (e.g., MASON)" required>
-            
-            <label style="display: block; text-align: left; margin: 10px 0 5px 0; font-size: 12px; color: #555; font-weight: bold;">Employee Photo:</label>
-            <input type="file" id="empPhoto" accept="image/*" onchange="previewImage(event)">
-            
+            <!-- Pinalitan ng Text Input para sa filename ng litrato sa GitHub -->
+            <input type="text" id="empPhotoFile" placeholder="Photo filename (e.g., mark.jpg)" required>
             <button onclick="saveEmployee()">Save & Create QR</button>
         </div>
 
@@ -319,80 +317,40 @@
 </div>
 
 <script>
-    var uploadedImageSrc = "https://www.w3schools.com/howto/img_avatar.png"; 
-    var employeeDatabase = JSON.parse(localStorage.getItem("confianza_db")) || [];
+    var employeeDatabase = JSON.parse(localStorage.getItem("confianza_github_db")) || [];
 
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
-        const scanId = urlParams.get('id');
+        const scanName = urlParams.get('name');
+        const scanPos = urlParams.get('pos');
+        const scanImg = urlParams.get('img');
 
-        if (scanId) {
-            // Tanggalin ang dashboard sa phone view para hindi ma-click
+        if (scanName && scanPos) {
             document.getElementById("dashboardView").remove(); 
             document.getElementById("portalView").style.display = "block";
             
-            // Hanapin ang empleyado sa database gamit ang ID
-            var emp = employeeDatabase.find(e => e.id === scanId);
-            if (emp) {
-                document.getElementById("portalName").innerText = emp.name;
-                document.getElementById("portalPosition").innerText = emp.position;
-                document.getElementById("portalImage").src = emp.photo || "https://www.w3schools.com/howto/img_avatar.png";
-            } else {
-                // Fallback kapag walang makitang profile o ibang browser ang ginamit
-                const fallbackName = urlParams.get('name');
-                const fallbackPos = urlParams.get('pos');
-                if (fallbackName && fallbackPos) {
-                    document.getElementById("portalName").innerText = decodeURIComponent(fallbackName);
-                    document.getElementById("portalPosition").innerText = decodeURIComponent(fallbackPos);
-                }
+            document.getElementById("portalName").innerText = decodeURIComponent(scanName);
+            document.getElementById("portalPosition").innerText = decodeURIComponent(scanPos);
+            
+            if (scanImg) {
+                // Kinukuha ang tamang full URL ng litrato mula sa iyong GitHub Pages link
+                var currentPath = window.location.pathname;
+                var basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+                var fullImageUrl = window.location.origin + basePath + decodeURIComponent(scanImg);
+                document.getElementById("portalImage").src = fullImageUrl;
             }
         } else {
             renderDirectory();
         }
     }
 
-    function previewImage(event) {
-        var file = event.target.files[0];
-        if (file) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var img = new Image();
-                img.onload = function() {
-                    var canvas = document.createElement("canvas");
-                    // Tamang sukat para sa database storage
-                    var max_size = 120; 
-                    var width = img.width;
-                    var height = img.height;
-
-                    if (width > height) {
-                        if (width > max_size) {
-                            height *= max_size / width;
-                            width = max_size;
-                        }
-                    } else {
-                        if (height > max_size) {
-                            width *= max_size / height;
-                            height = max_size;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    var ctx = canvas.getContext("2d");
-                    ctx.drawImage(img, 0, 0, width, height);
-                    uploadedImageSrc = canvas.toDataURL("image/jpeg", 0.6); 
-                }
-                img.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-    }
-
     function saveEmployee() {
         var name = document.getElementById("empName").value.trim();
         var position = document.getElementById("empPosition").value.trim();
+        var imgFile = document.getElementById("empPhotoFile").value.trim();
 
-        if (name === "" || position === "") {
-            alert("Please fill up the Name and Position.");
+        if (name === "" || position === "" || imgFile === "") {
+            alert("Please fill up all fields.");
             return;
         }
 
@@ -400,16 +358,15 @@
             id: "EMP_" + Date.now(),
             name: name,
             position: position,
-            photo: uploadedImageSrc
+            photo: imgFile
         };
 
         employeeDatabase.push(newEmployee);
-        localStorage.setItem("confianza_db", JSON.stringify(employeeDatabase));
+        localStorage.setItem("confianza_github_db", JSON.stringify(employeeDatabase));
 
         document.getElementById("empName").value = "";
         document.getElementById("empPosition").value = "";
-        document.getElementById("empPhoto").value = "";
-        uploadedImageSrc = "https://www.w3schools.com/howto/img_avatar.png";
+        document.getElementById("empPhotoFile").value = "";
 
         renderDirectory();
     }
@@ -423,6 +380,10 @@
             return;
         }
 
+        var currentPath = window.location.pathname;
+        var basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+        var baseImgUrl = window.location.origin + basePath;
+
         employeeDatabase.forEach(function(emp) {
             var item = document.createElement("div");
             item.className = "employee-item";
@@ -434,7 +395,7 @@
 
             item.innerHTML = `
                 <button class="delete-btn" onclick="deleteEmployee(event, '${emp.id}')">&times;</button>
-                <img class="item-photo" src="${emp.photo}">
+                <img class="item-photo" src="${baseImgUrl + emp.photo}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
                 <span class="item-name">${emp.name}</span>
                 <span class="item-pos">${emp.position}</span>
             `;
@@ -446,7 +407,7 @@
         event.stopPropagation();
         if(confirm("Are you sure?")) {
             employeeDatabase = employeeDatabase.filter(emp => emp.id !== id);
-            localStorage.setItem("confianza_db", JSON.stringify(employeeDatabase));
+            localStorage.setItem("confianza_github_db", JSON.stringify(employeeDatabase));
             renderDirectory();
         }
     }
@@ -459,11 +420,9 @@
         qrDiv.innerHTML = "";
 
         var currentUrl = window.location.href.split('?')[0];
-        // Idadala lang natin ang ID, Name, at Pos nang WALANG dambuhalang image string.
-        // Dahil dito, magiging sobrang simple at madaling-madali nang i-scan ang QR code!
-        var scanUrl = currentUrl + "?id=" + emp.id + 
-                      "&name=" + encodeURIComponent(emp.name) + 
-                      "&pos=" + encodeURIComponent(emp.position);
+        var scanUrl = currentUrl + "?name=" + encodeURIComponent(emp.name) + 
+                      "&pos=" + encodeURIComponent(emp.position) +
+                      "&img=" + encodeURIComponent(emp.photo);
 
         new QRCode(qrDiv, {
             text: scanUrl,
