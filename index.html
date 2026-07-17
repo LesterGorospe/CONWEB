@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confianza Construction - Employee Portal</title>
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #1a365d;
+            --success: #2ec4b6; /* Magandang Emerald Green para sa Active */
+            --bg-light: #eef2f7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-light);
+            color: #333;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- 1. VIEW PARA SA COMPUTER (Dashboard) --- */
+        .dashboard-container {
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .header {
+            text-align: center;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #dbe2ec;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 2fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid #dbe2ec;
+        }
+
+        .card h2 {
+            color: var(--primary);
+            margin-top: 0;
+            font-size: 18px;
+            border-bottom: 2px solid #eef2f7;
+            padding-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background-color: #2a4365;
+        }
+
+        /* Employee List Directory */
+        .employee-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .employee-item {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .employee-item:hover {
+            border-color: var(--primary);
+        }
+
+        .item-photo {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 8px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .item-name {
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--primary);
+            display: block;
+        }
+
+        .item-pos {
+            font-size: 12px;
+            color: #64748b;
+            display: block;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            color: #ff4d4d;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* Modal Preview ng QR para sa Admin */
+        .admin-view-card {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .admin-view-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 320px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+        .close-card {
+            position: absolute;
+            top: 5px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .qr-display {
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+        }
+
+        /* --- 2. VERIFICATION VIEW NA LALABAS SA SMARTPHONE (Matapos i-scan) --- */
+        .portal-wrapper {
+            display: none; /* Nakatago by default sa PC */
+            width: 100%;
+            max-width: 380px;
+            background-color: #ffffff;
+            padding: 40px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            margin-top: 50px;
+            box-sizing: border-box;
+        }
+
+        .portal-logo {
+            font-weight: 850;
+            font-size: 20px;
+            color: var(--primary);
+            letter-spacing: 1.5px;
+            margin-bottom: 25px;
+        }
+
+        .portal-photo-frame {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 4px solid var(--primary);
+            overflow: hidden;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .portal-photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .portal-name {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1a202c;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .portal-position {
+            font-size: 14px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        /* ETO ANG HININGI MONG KULAY BERDENG "ACTIVE EMPLOYEE" STATUS */
+        .portal-status {
+            font-size: 18px;
+            font-weight: bold;
+            color: #27ae60 !important; /* Siguradong Green */
+            background-color: #e8f8f0;
+            padding: 12px 35px;
+            border-radius: 50px;
+            display: inline-block;
+            border: 2px solid #27ae60;
+            letter-spacing: 1.5px;
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.15);
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+<!-- VIEW 1: COMPUTER DASHBOARD VIEW -->
+<div class="dashboard-container" id="dashboardView">
+    <div class="header">
+        <h1>CONFIANZA CONSTRUCTION</h1>
+        <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Employee Profile & QR Code System</p>
+    </div>
+
+    <div class="main-layout">
+        <!-- Input Form -->
+        <div class="card">
+            <h2>Register Employee</h2>
+            <input type="text" id="empName" placeholder="Employee Name" required>
+            <input type="text" id="empPosition" placeholder="Position (e.g., MASON)" required>
+            
+            <label style="display: block; text-align: left; margin: 10px 0 5px 0; font-size: 12px; color: #555; font-weight: bold;">Employee Photo:</label>
+            <input type="file" id="empPhoto" accept="image/*" onchange="previewImage(event)">
+            
+            <button onclick="saveEmployee()">Save & Create QR</button>
+        </div>
+
+        <!-- Directory list -->
+        <div class="card">
+            <h2>Active Directory</h2>
+            <div class="employee-grid" id="employeeGrid"></div>
+        </div>
+    </div>
+</div>
+
+<!-- VIEW 2: SMARTPHONE SCAN PORTAL (Eto ang makikita sa selpon pagka-scan) -->
+<div class="portal-wrapper" id="portalView">
+    <div class="portal-logo">CONFIANZA CONSTRUCTION</div>
+    
+    <div class="portal-photo-frame">
+        <!-- Default avatar kapag iniscan sa ibang phone -->
+        <img id="portalImage" src="https://www.w3schools.com/howto/img_avatar.png" alt="Employee Photo">
+    </div>
+    
+    <div class="portal-name" id="portalName">---</div>
+    <div class="portal-position" id="portalPosition">---</div>
+    
+    <!-- BERDENG ACTIVE STATUS TEXT -->
+    <div class="portal-status" id="portalStatus">ACTIVE EMPLOYEE</div>
+    
+    <button onclick="backToDashboard()" style="margin-top: 40px; background-color: #4a5568; font-size: 12px;">Go to Dashboard</button>
+</div>
+
+<!-- Modal para sa QR Code Preview ng Admin -->
+<div class="admin-view-card" id="adminCardModal">
+    <div class="admin-view-content">
+        <span class="close-card" onclick="closeAdminCard()">&times;</span>
+        <h3 id="modalName" style="margin: 0; color: var(--primary);"></h3>
+        <p id="modalPos" style="margin: 5px 0; font-size: 13px; color: #666;"></p>
+        <div class="qr-display" id="modalQR"></div>
+        <p style="font-size: 11px; color: #888; margin: 0;">Scan using smartphone camera to test verification page.</p>
+    </div>
+</div>
+
+<script>
+    var uploadedImageSrc = "https://www.w3schools.com/howto/img_avatar.png"; 
+    var employeeDatabase = JSON.parse(localStorage.getItem("confianza_db")) || [];
+
+    window.onload = function() {
+        // Tinitignan kung may scan data sa link ng browser
+        const urlParams = new URLSearchParams(window.location.search);
+        const scanName = urlParams.get('name');
+        const scanPos = urlParams.get('pos');
+
+        if (scanName && scanPos) {
+            // Itatago ang dashboard, ipapakita ang Green Verification page sa selpon!
+            document.getElementById("dashboardView").style.display = "none";
+            document.getElementById("portalView").style.display = "block";
+            
+            document.getElementById("portalName").innerText = decodeURIComponent(scanName);
+            document.getElementById("portalPosition").innerText = decodeURIComponent(scanPos);
+        } else {
+            renderDirectory();
+        }
+    }
+
+    function previewImage(event) {
+        var reader = new FileReader();
+        reader.onload = function() {
+            uploadedImageSrc = reader.result;
+        }
+        if(event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    }
+
+    function saveEmployee() {
+        var name = document.getElementById("empName").value.trim();
+        var position = document.getElementById("empPosition").value.trim();
+
+        if (name === "" || position === "") {
+            alert("Please fill up the Name and Position.");
+            return;
+        }
+
+        var employeeId = "EMP_" + Date.now();
+
+        var newEmployee = {
+            id: employeeId,
+            name: name,
+            position: position,
+            photo: uploadedImageSrc
+        };
+
+        employeeDatabase.push(newEmployee);
+        localStorage.setItem("confianza_db", JSON.stringify(employeeDatabase));
+
+        // Reset form
+        document.getElementById("empName").value = "";
+        document.getElementById("empPosition").value = "";
+        document.getElementById("empPhoto").value = "";
+        uploadedImageSrc = "https://www.w3schools.com/howto/img_avatar.png";
+
+        renderDirectory();
+    }
+
+    function renderDirectory() {
+        var gridDiv = document.getElementById("employeeGrid");
+        gridDiv.innerHTML = "";
+
+        if(employeeDatabase.length === 0) {
+            gridDiv.innerHTML = "<p style='color: #888; grid-column: 1/-1;'>No registered employees yet.</p>";
+            return;
+        }
+
+        employeeDatabase.forEach(function(emp) {
+            var item = document.createElement("div");
+            item.className = "employee-item";
+            item.onclick = function(e) {
+                if(e.target.className !== "delete-btn") {
+                    showAdminQRModal(emp);
+                }
+            };
+
+            item.innerHTML = `
+                <button class="delete-btn" onclick="deleteEmployee(event, '${emp.id}')">&times;</button>
+                <img class="item-photo" src="${emp.photo}">
+                <span class="item-name">${emp.name}</span>
+                <span class="item-pos">${emp.position}</span>
+            `;
+            gridDiv.appendChild(item);
+        });
+    }
+
+    function deleteEmployee(event, id) {
+        event.stopPropagation();
+        if(confirm("Are you sure you want to delete this profile?")) {
+            employeeDatabase = employeeDatabase.filter(emp => emp.id !== id);
+            localStorage.setItem("confianza_db", JSON.stringify(employeeDatabase));
+            renderDirectory();
+        }
+    }
+
+    function showAdminQRModal(emp) {
+        document.getElementById("modalName").innerText = emp.name;
+        document.getElementById("modalPos").innerText = emp.position;
+        
+        var qrDiv = document.getElementById("modalQR");
+        qrDiv.innerHTML = "";
+
+        // PINALITAN: Isinama na natin ang Pangalan at Posisyon sa mismong URL link 
+        // para mabasa agad ng kahit anong selpon sa scan nang walang error!
+        var currentUrl = window.location.href.split('?')[0];
+        var scanUrl = currentUrl + "?name=" + encodeURIComponent(emp.name) + "&pos=" + encodeURIComponent(emp.position);
+
+        new QRCode(qrDiv, {
+            text: scanUrl,
+            width: 170,
+            height: 170,
+            colorDark : "#1a365d",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.M
+        });
+
+        document.getElementById("adminCardModal").style.display = "flex";
+    }
+
+    function closeAdminCard() {
+        document.getElementById("adminCardModal").style.display = "none";
+    }
+
+    function backToDashboard() {
+        window.location.href = window.location.href.split('?')[0];
+    }
+</script>
+</body>
+</html>
