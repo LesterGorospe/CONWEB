@@ -9,7 +9,7 @@
     <style>
         :root {
             --primary: #1a365d;
-            --success: #2ec4b6; /* Magandang Emerald Green para sa Active */
+            --success: #27ae60; 
             --bg-light: #eef2f7;
         }
 
@@ -24,7 +24,7 @@
             align-items: center;
         }
 
-        /* --- 1. VIEW PARA SA COMPUTER (Dashboard) --- */
+        /* --- 1. COMPUTER DASHBOARD --- */
         .dashboard-container {
             max-width: 1000px;
             width: 100%;
@@ -105,7 +105,6 @@
             background-color: #2a4365;
         }
 
-        /* Employee List Directory */
         .employee-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -160,7 +159,6 @@
             cursor: pointer;
         }
 
-        /* Modal Preview ng QR para sa Admin */
         .admin-view-card {
             display: none;
             position: fixed;
@@ -177,7 +175,7 @@
             background: white;
             padding: 25px;
             border-radius: 12px;
-            max-width: 320px;
+            max-width: 340px;
             width: 100%;
             text-align: center;
             position: relative;
@@ -199,18 +197,18 @@
             border: 1px solid #ddd;
         }
 
-        /* --- 2. VERIFICATION VIEW NA LALABAS SA SMARTPHONE (Matapos i-scan) --- */
+        /* --- 2. SMARTPHONE SCREEN VIEW (WALANG DASHBOARD BUTTON) --- */
         .portal-wrapper {
-            display: none; /* Nakatago by default sa PC */
+            display: none; 
             width: 100%;
             max-width: 380px;
             background-color: #ffffff;
-            padding: 40px 20px;
+            padding: 45px 25px;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             text-align: center;
             border: 1px solid #e2e8f0;
-            margin-top: 50px;
+            margin-top: 60px;
             box-sizing: border-box;
         }
 
@@ -223,13 +221,14 @@
         }
 
         .portal-photo-frame {
-            width: 130px;
-            height: 130px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
             border: 4px solid var(--primary);
             overflow: hidden;
             margin: 0 auto 20px auto;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            background-color: #f7fafc;
         }
 
         .portal-photo-frame img {
@@ -255,25 +254,23 @@
             margin-bottom: 30px;
         }
 
-        /* ETO ANG HININGI MONG KULAY BERDENG "ACTIVE EMPLOYEE" STATUS */
         .portal-status {
             font-size: 18px;
             font-weight: bold;
-            color: #27ae60 !important; /* Siguradong Green */
+            color: var(--success);
             background-color: #e8f8f0;
             padding: 12px 35px;
             border-radius: 50px;
             display: inline-block;
-            border: 2px solid #27ae60;
+            border: 2px solid var(--success);
             letter-spacing: 1.5px;
-            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.15);
             text-transform: uppercase;
         }
     </style>
 </head>
 <body>
 
-<!-- VIEW 1: COMPUTER DASHBOARD VIEW -->
+<!-- COMPUTER VIEW -->
 <div class="dashboard-container" id="dashboardView">
     <div class="header">
         <h1>CONFIANZA CONSTRUCTION</h1>
@@ -281,7 +278,6 @@
     </div>
 
     <div class="main-layout">
-        <!-- Input Form -->
         <div class="card">
             <h2>Register Employee</h2>
             <input type="text" id="empName" placeholder="Employee Name" required>
@@ -293,7 +289,6 @@
             <button onclick="saveEmployee()">Save & Create QR</button>
         </div>
 
-        <!-- Directory list -->
         <div class="card">
             <h2>Active Directory</h2>
             <div class="employee-grid" id="employeeGrid"></div>
@@ -301,25 +296,18 @@
     </div>
 </div>
 
-<!-- VIEW 2: SMARTPHONE SCAN PORTAL (Eto ang makikita sa selpon pagka-scan) -->
+<!-- SMARTPHONE VIEW -->
 <div class="portal-wrapper" id="portalView">
     <div class="portal-logo">CONFIANZA CONSTRUCTION</div>
-    
     <div class="portal-photo-frame">
-        <!-- Default avatar kapag iniscan sa ibang phone -->
         <img id="portalImage" src="https://www.w3schools.com/howto/img_avatar.png" alt="Employee Photo">
     </div>
-    
     <div class="portal-name" id="portalName">---</div>
     <div class="portal-position" id="portalPosition">---</div>
-    
-    <!-- BERDENG ACTIVE STATUS TEXT -->
     <div class="portal-status" id="portalStatus">ACTIVE EMPLOYEE</div>
-    
-    <button onclick="backToDashboard()" style="margin-top: 40px; background-color: #4a5568; font-size: 12px;">Go to Dashboard</button>
 </div>
 
-<!-- Modal para sa QR Code Preview ng Admin -->
+<!-- Admin Modal -->
 <div class="admin-view-card" id="adminCardModal">
     <div class="admin-view-content">
         <span class="close-card" onclick="closeAdminCard()">&times;</span>
@@ -335,30 +323,61 @@
     var employeeDatabase = JSON.parse(localStorage.getItem("confianza_db")) || [];
 
     window.onload = function() {
-        // Tinitignan kung may scan data sa link ng browser
         const urlParams = new URLSearchParams(window.location.search);
         const scanName = urlParams.get('name');
         const scanPos = urlParams.get('pos');
+        const scanPhoto = urlParams.get('photo');
 
         if (scanName && scanPos) {
-            // Itatago ang dashboard, ipapakita ang Green Verification page sa selpon!
-            document.getElementById("dashboardView").style.display = "none";
+            document.getElementById("dashboardView").style.style.display = "none";
+            document.getElementById("dashboardView").remove(); // Siguradong burado ang computer dashboard sa selpon
             document.getElementById("portalView").style.display = "block";
             
             document.getElementById("portalName").innerText = decodeURIComponent(scanName);
             document.getElementById("portalPosition").innerText = decodeURIComponent(scanPos);
+            
+            if (scanPhoto) {
+                // Pinapalitan ang default avatar ng totoong pinadalang litrato
+                document.getElementById("portalImage").src = decodeURIComponent(scanPhoto);
+            }
         } else {
             renderDirectory();
         }
     }
 
     function previewImage(event) {
-        var reader = new FileReader();
-        reader.onload = function() {
-            uploadedImageSrc = reader.result;
-        }
-        if(event.target.files[0]) {
-            reader.readAsDataURL(event.target.files[0]);
+        var file = event.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    var canvas = document.createElement("canvas");
+                    // Tamang sukat para magaan sa QR pero malinaw sa bilog
+                    var max_size = 70; 
+                    var width = img.width;
+                    var height = img.height;
+
+                    if (width > height) {
+                        if (width > max_size) {
+                            height *= max_size / width;
+                            width = max_size;
+                        }
+                    } else {
+                        if (height > max_size) {
+                            width *= max_size / height;
+                            height = max_size;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    var ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, width, height);
+                    uploadedImageSrc = canvas.toDataURL("image/jpeg", 0.4); 
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
         }
     }
 
@@ -371,10 +390,8 @@
             return;
         }
 
-        var employeeId = "EMP_" + Date.now();
-
         var newEmployee = {
-            id: employeeId,
+            id: "EMP_" + Date.now(),
             name: name,
             position: position,
             photo: uploadedImageSrc
@@ -383,7 +400,6 @@
         employeeDatabase.push(newEmployee);
         localStorage.setItem("confianza_db", JSON.stringify(employeeDatabase));
 
-        // Reset form
         document.getElementById("empName").value = "";
         document.getElementById("empPosition").value = "";
         document.getElementById("empPhoto").value = "";
@@ -422,7 +438,7 @@
 
     function deleteEmployee(event, id) {
         event.stopPropagation();
-        if(confirm("Are you sure you want to delete this profile?")) {
+        if(confirm("Are you sure?")) {
             employeeDatabase = employeeDatabase.filter(emp => emp.id !== id);
             localStorage.setItem("confianza_db", JSON.stringify(employeeDatabase));
             renderDirectory();
@@ -436,18 +452,18 @@
         var qrDiv = document.getElementById("modalQR");
         qrDiv.innerHTML = "";
 
-        // PINALITAN: Isinama na natin ang Pangalan at Posisyon sa mismong URL link 
-        // para mabasa agad ng kahit anong selpon sa scan nang walang error!
         var currentUrl = window.location.href.split('?')[0];
-        var scanUrl = currentUrl + "?name=" + encodeURIComponent(emp.name) + "&pos=" + encodeURIComponent(emp.position);
+        var scanUrl = currentUrl + "?name=" + encodeURIComponent(emp.name) + 
+                      "&pos=" + encodeURIComponent(emp.position) + 
+                      "&photo=" + encodeURIComponent(emp.photo);
 
         new QRCode(qrDiv, {
             text: scanUrl,
-            width: 170,
-            height: 170,
+            width: 230, // Pinalaki pa natin para siguradong malinaw at kasya ang picture data
+            height: 230,
             colorDark : "#1a365d",
             colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.M
+            correctLevel : QRCode.CorrectLevel.L
         });
 
         document.getElementById("adminCardModal").style.display = "flex";
@@ -455,10 +471,6 @@
 
     function closeAdminCard() {
         document.getElementById("adminCardModal").style.display = "none";
-    }
-
-    function backToDashboard() {
-        window.location.href = window.location.href.split('?')[0];
     }
 </script>
 </body>
